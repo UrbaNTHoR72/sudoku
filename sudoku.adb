@@ -9,6 +9,7 @@ procedure Sudoku is
     type board is array (0..8,0..8) of integer;
     myGame : board;
     check : integer;
+    debug : file_type;
 
     --LoadFile
     ---------------------------------------------------
@@ -28,44 +29,6 @@ procedure Sudoku is
             end loop;
         close(infp);
     end LoadFile;
-
-    --WriteFile
-    ---------------------------------------------------
-    procedure WriteFile(game : in board) is
-    outfp : file_type;
-    fileName : unbounded_string;
-    begin
-    	--get output file name
-    	put("please enter the name of the output file (leave blank for console)> ");
-    	get_line(fileName);
-    	if (fileName /= "") then
-    		create(outfp, out_file, To_String(fileName));
-    		set_output(outfp);
-    	end if;
-
-    	--display board
-        put("+-----+-----+-----+");
-        new_line;
-        for k in 1..3 loop
-	     	for i in (k*3 -2)..(k*3) loop
-	        	put("|"); 
-	        	for j in 1..3 loop
-	        		put(game(i - 1,(j*3) - 3),width => 1);
-	        		put(" "); 
-	        		put(game(i - 1,(j*3) - 2),width => 1); 
-	        		put(" "); 
-	        		put(game(i - 1,(j*3) - 1),width => 1); 
-	        		put("|");
-	        	end loop;
-	        	new_line;
-	        end loop;
-	        put("+-----+-----+-----+");
-	        new_line;
-	    end loop;
-
-	    --return to normal
-	    set_output(standard_output);
-    end WriteFile;
 
     --FindSolution
     ---------------------------------------------------
@@ -148,9 +111,78 @@ procedure Sudoku is
     		end if;
     	end loop;
     end FindSolution;
+
+    --WriteFile
+    ---------------------------------------------------
+    procedure WriteFile(game : in board) is
+    outfp : file_type;
+    fileName : unbounded_string;
+    begin
+    	--get output file name
+    	put("please enter the name of the output file (leave blank for console)> ");
+    	get_line(fileName);
+    	if (fileName /= "") then
+    		create(outfp, out_file, To_String(fileName));
+    		set_output(outfp);
+    	end if;
+
+    	--display board
+        put("+-----+-----+-----+");
+        new_line;
+        for k in 1..3 loop
+	     	for i in (k*3 -2)..(k*3) loop
+	        	put("|"); 
+	        	for j in 1..3 loop
+	        		put(game(i - 1,(j*3) - 3),width => 1);
+	        		put(" "); 
+	        		put(game(i - 1,(j*3) - 2),width => 1); 
+	        		put(" "); 
+	        		put(game(i - 1,(j*3) - 1),width => 1); 
+	        		put("|");
+	        	end loop;
+	        	new_line;
+	        end loop;
+	        put("+-----+-----+-----+");
+	        new_line;
+	    end loop;
+
+	    --return to normal
+	    if is_open(outfp) then
+			close(outfp);
+		end if;
+	    set_output(standard_output);
+    end WriteFile;
+
+    function isSolved(game : in board) return integer is
+    begin
+    	for i in 0..8 loop
+    		for j in 0..8 loop
+    			if game(i,j) = 0 then
+    				return 0;
+    			end if;
+    		end loop;
+    	end loop;
+    	return 1;
+    end isSolved;
+
 begin
-    LoadFile(game => myGame);
+	--loads array from file
+	LoadFile(game=> myGame);
+
+	--prints out attempts made by recursive backtracking
+	create(debug, out_file, "debug.txt");
+	set_output(debug);
+	--solves puzzle
     FindSolution(myGame,0,0,check);
-    WriteFile(game => myGame);
+    set_output(standard_output);
+    delete(debug);
+
+   	--checks if puzzle is solved and outputs the puzzle
+   	if isSolved(game=> myGame) = 1 then
+    	WriteFile(game => myGame);
+    else
+    	put("Puzzle is unsolvable");
+    	new_line;
+    end if;
 end Sudoku;
 
